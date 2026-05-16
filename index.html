@@ -193,6 +193,73 @@
     }
     #save-btn:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
 
+    /* ── EXPORT / IMPORT ───────────────────────────────────── */
+    #data-row {
+      display: flex; gap: 6px; margin-top: 4px; align-items: stretch;
+    }
+    .data-btn {
+      flex: 1; background: transparent;
+      border: 1px solid rgba(201,168,76,.2); color: rgba(201,168,76,.45);
+      font-family: 'Cinzel', serif; font-size: .54rem; letter-spacing: .14em;
+      padding: 6px 4px; cursor: pointer;
+      text-transform: uppercase; transition: all .22s;
+    }
+    .data-btn:hover { border-color: rgba(201,168,76,.5); color: #c9a84c; }
+
+    #info-btn {
+      flex-shrink: 0;
+      width: 28px;
+      background: transparent;
+      border: 1px solid rgba(201,168,76,.2); border-radius: 50%;
+      color: rgba(201,168,76,.45); font-family: 'Cinzel', serif;
+      font-size: .6rem; cursor: pointer; transition: all .22s;
+    }
+    #info-btn:hover { border-color: rgba(201,168,76,.5); color: #c9a84c; }
+
+    /* ── INFO MODAL ────────────────────────────────────────── */
+    #info-modal {
+      display: none;
+      position: fixed; inset: 0; z-index: 300;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,.6);
+      padding: 20px;
+    }
+    #info-modal.open { display: flex; }
+
+    #info-box {
+      background: rgba(4,3,14,.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(201,168,76,.35);
+      border-top: 2px solid rgba(201,168,76,.6);
+      max-width: 360px; width: 100%;
+      padding: 24px 22px 20px;
+      color: #c9a84c;
+      font-family: 'Cinzel', Georgia, serif;
+      position: relative;
+    }
+    #info-box h3 {
+      font-family: 'Cinzel Decorative', 'Cinzel', serif;
+      font-size: .85rem; letter-spacing: .08em;
+      margin-bottom: 14px;
+      text-shadow: 0 0 20px rgba(201,168,76,.3);
+    }
+    #info-box p {
+      font-size: .68rem; line-height: 1.7;
+      color: rgba(201,168,76,.75);
+      margin-bottom: 10px;
+    }
+    #info-box p:last-of-type { margin-bottom: 18px; }
+    #info-box strong { color: #c9a84c; }
+    #info-close {
+      display: block; width: 100%;
+      background: transparent;
+      border: 1px solid rgba(201,168,76,.4); color: #c9a84c;
+      font-family: 'Cinzel', serif; font-size: .62rem; letter-spacing: .2em;
+      padding: 8px; cursor: pointer; text-transform: uppercase;
+      transition: all .22s;
+    }
+    #info-close:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
+
     /* ── STATE CLASSES ─────────────────────────────────────── */
     .state-arrived #status-text { animation: pulse-txt 2.2s ease-in-out infinite; }
     @keyframes pulse-txt {
@@ -258,7 +325,26 @@
         <button class="mood-btn" id="btn-dread">Forebode</button>
         <button id="save-btn">Set</button>
       </div>
+      <div id="data-row">
+        <button class="data-btn" id="export-btn">Export Events</button>
+        <label class="data-btn" style="text-align:center; cursor:pointer;">
+          Import Events
+          <input type="file" id="import-file" accept=".json" style="display:none">
+        </label>
+        <button id="info-btn" aria-label="About export and import">?</button>
+      </div>
     </div>
+
+<!-- Info modal -->
+<div id="info-modal">
+  <div id="info-box">
+    <h3>Your Events</h3>
+    <p>Ere Long saves your countdowns on <strong>this device only</strong>. If you clear your browser data or switch to a new device, your events will be lost.</p>
+    <p><strong>Export Events</strong> — saves all four of your countdowns to a file on your computer. Keep it somewhere safe.</p>
+    <p><strong>Import Events</strong> — restores your countdowns from a previously exported file. Use this on a new device or after clearing your data.</p>
+    <button id="info-close">Got it</button>
+  </div>
+</div>
 
   </div>
 </div>
@@ -659,6 +745,45 @@ document.getElementById('btn-dread').addEventListener('click',()=>{
 document.getElementById('save-btn').addEventListener('click', panelSave);
 document.getElementById('inp-name').addEventListener('blur', panelSave);
 document.getElementById('inp-date').addEventListener('change', panelSave);
+
+// ── INFO MODAL ─────────────────────────────────────────────
+const infoModal = document.getElementById('info-modal');
+document.getElementById('info-btn').addEventListener('click', () => infoModal.classList.add('open'));
+document.getElementById('info-close').addEventListener('click', () => infoModal.classList.remove('open'));
+infoModal.addEventListener('click', e => { if (e.target === infoModal) infoModal.classList.remove('open'); });
+
+// ── EXPORT / IMPORT ────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', () => {
+  const data = JSON.stringify(state.faces, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'erelong-events.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (Array.isArray(parsed) && parsed.length === 4) {
+        state.faces = parsed.map(f => ({ ...blankFace(), ...f }));
+        persist();
+        // Re-seed quote state
+        state.faces.forEach((f,i) => {
+          const phase = faceStatus(f).phase;
+          qState.phase[i]=phase; qState.mood[i]=f.mood; qState.current[i]=pickQuote(phase,f.mood);
+        });
+        panelLoad(state.face);
+      }
+    } catch(_) {}
+    e.target.value = ''; // reset so same file can be re-imported
+  };
+  reader.readAsText(file);
+});
 
 // ── FACE NAVIGATION (with dial fade) ──────────────────────
 function goToFace(next) {
