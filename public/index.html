@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ere Long</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Opening screen: blackletter title auto-fades to landscape -->
+<div id="opening-screen">
+  <div id="opening-title">Ere Long</div>
+</div>
+
+<div id="bg-a"></div>
+<div id="bg-b"></div>
+
+<div id="app">
+  <div id="panel">
+
+    <!-- Four countdown clock faces with integrated navigation -->
+    <div id="dial-area">
+      <button class="nav-arrow" id="btn-prev" aria-label="Previous">&#9664;</button>
+      <div id="dial-row">
+        <div class="dial-wrap">
+          <canvas class="dial-canvas" id="dial-d" width="86" height="86"></canvas>
+          <span class="dial-label">Days</span>
+        </div>
+        <div class="dial-wrap">
+          <canvas class="dial-canvas" id="dial-h" width="86" height="86"></canvas>
+          <span class="dial-label">Hrs</span>
+        </div>
+        <div class="dial-wrap">
+          <canvas class="dial-canvas" id="dial-m" width="86" height="86"></canvas>
+          <span class="dial-label">Min</span>
+        </div>
+        <div class="dial-wrap">
+          <canvas class="dial-canvas" id="dial-s" width="86" height="86"></canvas>
+          <span class="dial-label">Sec</span>
+        </div>
+      </div>
+      <button class="nav-arrow" id="btn-next" aria-label="Next">&#9654;</button>
+    </div>
+
+    <div id="status-text"></div>
+
+    <div id="quote-area">
+      <div id="quote-text"></div>
+      <div id="quote-attr"></div>
+    </div>
+
+    <div class="divider"><span class="div-gem">✦</span></div>
+
+    <div id="input-panel">
+      <input type="text" id="inp-name" class="panel-input" placeholder="Name this event…" maxlength="40">
+      <div id="date-row">
+        <input type="datetime-local" id="inp-date" class="panel-input" min="1900-01-01T00:00" max="9999-12-31T23:59">
+        <button id="mute-btn" aria-label="Toggle sound">♪</button>
+      </div>
+      <div id="action-row">
+        <button class="mood-btn" id="btn-anticipation">Await</button>
+        <button class="mood-btn" id="btn-dread">Forebode</button>
+        <button id="save-btn">Set</button>
+      </div>
+      <div id="data-row">
+        <button class="data-btn" id="export-btn">Export Events</button>
+        <label class="data-btn import-label">
+          Import Events
+          <input type="file" id="import-file" accept=".json">
+        </label>
+        <button id="info-btn" aria-label="Open the guide">?</button>
+      </div>
+    </div>
+
+<!-- Info modal: how-to guide + privacy / export-import -->
+<div id="info-modal">
+  <div id="info-box">
+    <h3>How to Use</h3>
+    <p>Ere Long keeps <strong>four faces</strong> — four separate events. Turn between them with the ◀ ▶ arrows or your keyboard's arrow keys. Name an event, choose its date and hour, and press <strong>Set</strong>.</p>
+    <p><strong>Await</strong> marks something longed for; <strong>Forebode</strong>, something dreaded. The scenery, music, and words follow the mood as the hour draws near. Choose neither, and all stays still. The ♪ button silences the music.</p>
+    <h3>Your Events</h3>
+    <p><strong>Private by design</strong> — your serial number only unlocks the door. Your events are saved solely in this browser, on this device: no account, no database of your countdowns, and no one — not even us — can see what you're counting down to. But if you clear your browser data or switch devices, your events will be lost. So:</p>
+    <p><strong>Export Events</strong> — saves all four of your countdowns to a file on your computer. Keep it somewhere safe.</p>
+    <p><strong>Import Events</strong> — restores your countdowns from a previously exported file. Use this on a new device or after clearing your data.</p>
+    <button id="info-close">Got it</button>
+  </div>
+</div>
+
+<!-- First-visit tutorial (shown once, then via the ? button) -->
+<div id="tut-modal">
+  <div id="tut-box">
+    <h3 id="tut-title"></h3>
+    <p id="tut-text"></p>
+    <div id="tut-dots"><span>✦</span><span>✦</span><span>✦</span><span>✦</span></div>
+    <div id="tut-nav">
+      <button id="tut-skip">Skip</button>
+      <button id="tut-next">Next</button>
+    </div>
+  </div>
+</div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

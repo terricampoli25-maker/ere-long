@@ -1,364 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Ere Long</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1a1a2e">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English+SC&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Cinzel', Georgia, serif; }
-
-    /* ── OPENING SCREEN ────────────────────────────────────── */
-    #opening-screen {
-      position: fixed; inset: 0; z-index: 200;
-      background: #000;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #opening-title {
-      font-family: 'UnifrakturMaguntia', cursive;
-      font-size: clamp(3.2rem, 13vw, 5.5rem);
-      color: rgba(201,168,76,.82);
-      text-shadow: 0 0 40px rgba(201,168,76,.3), 0 0 90px rgba(201,168,76,.1);
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-
-    /* ── BACKGROUND LAYERS ─────────────────────────────────── */
-    #bg-a, #bg-b {
-      position: fixed; inset: 0;
-      background-size: cover; background-position: center center;
-      background-color: #1a1a2e; transition: opacity 2s ease;
-    }
-    #bg-a { z-index: 1; opacity: 1; }
-    #bg-b { z-index: 2; opacity: 0; }
-
-    /* ── APP SHELL — panel sits at the top ─────────────────── */
-    #app {
-      position: fixed; inset: 0; z-index: 10;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: flex-start;
-      padding: 12px 14px 0;
-    }
-
-    /* ── PANEL ─────────────────────────────────────────────── */
-    #panel {
-      width: 100%; max-width: 480px;
-      max-height: 88vh; overflow-y: auto;
-      background: rgba(4,3,14,.52);
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-      border-top: 1px solid rgba(201,168,76,.3);
-      border-left: 1px solid rgba(201,168,76,.1);
-      border-right: 1px solid rgba(201,168,76,.1);
-      border-bottom: 1px solid rgba(201,168,76,.1);
-      padding: 10px 18px 14px;
-      color: #c9a84c;
-    }
-
-    /* ── DIAL AREA (arrows + four clock faces) ─────────────── */
-    #dial-area {
-      display: flex; align-items: center; gap: 2px;
-      padding: 4px 0 2px;
-      transition: opacity 0.35s ease;
-    }
-    #dial-area.fading { opacity: 0; }
-
-    #dial-row {
-      display: flex; justify-content: center;
-      align-items: flex-start; gap: 6px;
-      flex: 1;
-    }
-    .dial-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .dial-canvas { display: block; }
-    .dial-label {
-      font-size: .38rem; letter-spacing: .22em;
-      text-transform: uppercase; color: rgba(201,168,76,.6);
-      text-shadow: 0 1px 5px rgba(0,0,0,.9);
-    }
-
-    /* ── NAV ARROWS (inside dial area) ────────────────────── */
-    .nav-arrow {
-      background: transparent; border: none;
-      color: rgba(201,168,76,.55); font-size: 1rem;
-      padding: 4px 6px; cursor: pointer;
-      transition: color .2s; user-select: none; line-height: 1;
-      flex-shrink: 0; text-shadow: 0 1px 5px rgba(0,0,0,.9);
-    }
-    .nav-arrow:hover  { color: #c9a84c; }
-    .nav-arrow:active { transform: scale(.85); }
-
-    /* ── STATUS TEXT ───────────────────────────────────────── */
-    #status-text {
-      text-align: center; font-size: .55rem; letter-spacing: .22em;
-      text-transform: uppercase; font-style: italic;
-      color: rgba(201,168,76,.65); min-height: .9em; margin: 4px 0 4px;
-      text-shadow: 0 1px 6px rgba(0,0,0,.9);
-    }
-
-    /* ── QUOTE ─────────────────────────────────────────────── */
-    #quote-area {
-      text-align: center; min-height: 3.4em;
-      opacity: 0; transition: opacity 1s ease;
-      margin: 2px 0 8px; padding: 0 6px;
-    }
-    #quote-area.visible { opacity: 1; }
-    #quote-text {
-      font-family: 'IM Fell English SC', Georgia, serif;
-      font-size: .88rem; font-style: italic;
-      color: rgba(201,168,76,.75); line-height: 1.55;
-      text-shadow: 0 1px 6px rgba(0,0,0,.9);
-    }
-    #quote-attr {
-      font-size: .64rem; color: rgba(201,168,76,.5);
-      margin-top: 4px; letter-spacing: .09em; text-transform: uppercase;
-      text-shadow: 0 1px 4px rgba(0,0,0,.9);
-    }
-
-    /* ── ORNATE DIVIDER ────────────────────────────────────── */
-    .divider { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; }
-    .divider::before { background: linear-gradient(90deg, transparent, rgba(201,168,76,.35)); }
-    .divider::after  { background: linear-gradient(270deg, transparent, rgba(201,168,76,.35)); }
-    .div-gem { color: rgba(201,168,76,.55); font-size: .58rem; line-height: 1; flex-shrink: 0; }
-
-    /* ── INPUT PANEL ───────────────────────────────────────── */
-    #input-panel { display: flex; flex-direction: column; gap: 8px; }
-
-    .panel-input {
-      width: 100%; background: transparent; border: none;
-      border-bottom: 1px solid rgba(201,168,76,.3); border-radius: 0;
-      color: #c9a84c; font-family: 'Cinzel', Georgia, serif;
-      font-size: .74rem; padding: 5px 2px 6px; outline: none;
-      transition: border-color .25s;
-      text-shadow: 0 1px 5px rgba(0,0,0,.9);
-    }
-    .panel-input:focus { border-bottom-color: rgba(201,168,76,.7); }
-    .panel-input::placeholder { color: rgba(201,168,76,.3); }
-    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-      filter: sepia(1) saturate(2) hue-rotate(5deg) brightness(.85); cursor: pointer;
-    }
-
-    /* ── DATE + MUTE ROW ───────────────────────────────────── */
-    #date-row { display: flex; gap: 8px; align-items: center; }
-    #date-row .panel-input { flex: 1; }
-
-    /* ── MUTE BUTTON (inline) ──────────────────────────────── */
-    #mute-btn {
-      flex-shrink: 0;
-      width: 34px; height: 34px;
-      background: transparent;
-      border: 1px solid rgba(201,168,76,.4); border-radius: 2px;
-      color: rgba(201,168,76,.75); font-size: .9rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .2s; user-select: none;
-    }
-    #mute-btn:hover { border-color: #c9a84c; color: #c9a84c; }
-    #mute-btn.muted { color: rgba(201,168,76,.2); border-color: rgba(201,168,76,.15); }
-
-    /* ── ACTION ROW: Await | Forebode | Set ────────────────── */
-    #action-row { display: flex; gap: 6px; align-items: stretch; }
-
-    .mood-btn {
-      flex: 1; background: transparent;
-      border: 1px solid rgba(201,168,76,.25);
-      color: rgba(201,168,76,.45); font-family: 'Cinzel', serif;
-      font-size: .6rem; letter-spacing: .1em;
-      padding: 7px 2px; cursor: pointer;
-      text-transform: uppercase; transition: all .22s; position: relative;
-    }
-    .mood-btn::before, .mood-btn::after {
-      content: ''; position: absolute; width: 4px; height: 4px; transition: border-color .22s;
-    }
-    .mood-btn::before { top:-1px; left:-1px; border-top:1px solid rgba(201,168,76,.22); border-left:1px solid rgba(201,168,76,.22); }
-    .mood-btn::after  { bottom:-1px; right:-1px; border-bottom:1px solid rgba(201,168,76,.22); border-right:1px solid rgba(201,168,76,.22); }
-    .mood-btn:hover { color: #c9a84c; border-color: rgba(201,168,76,.55); }
-    .mood-btn.on-anticipation { background: rgba(201,168,76,.1); border-color: rgba(201,168,76,.7); color: #d4b455; }
-    .mood-btn.on-anticipation::before, .mood-btn.on-anticipation::after { border-color: rgba(201,168,76,.75); }
-    .mood-btn.on-dread { background: rgba(120,18,18,.2); border-color: rgba(176,34,34,.6); color: #cc4444; }
-    .mood-btn.on-dread::before, .mood-btn.on-dread::after { border-color: rgba(176,34,34,.7); }
-
-    #save-btn {
-      flex: 0 0 auto;
-      background: transparent;
-      border: 1px solid rgba(201,168,76,.45); color: #c9a84c;
-      font-family: 'Cinzel', serif; font-size: .6rem; letter-spacing: .18em;
-      padding: 7px 14px; cursor: pointer;
-      text-transform: uppercase; transition: all .25s;
-    }
-    #save-btn:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
-
-    /* ── EXPORT / IMPORT ───────────────────────────────────── */
-    #data-row {
-      display: flex; gap: 6px; margin-top: 4px; align-items: stretch;
-    }
-    .data-btn {
-      flex: 1; background: transparent;
-      border: 1px solid rgba(201,168,76,.2); color: rgba(201,168,76,.45);
-      font-family: 'Cinzel', serif; font-size: .54rem; letter-spacing: .14em;
-      padding: 6px 4px; cursor: pointer;
-      text-transform: uppercase; transition: all .22s;
-    }
-    .data-btn:hover { border-color: rgba(201,168,76,.5); color: #c9a84c; }
-
-    #info-btn {
-      flex-shrink: 0;
-      width: 28px;
-      background: transparent;
-      border: 1px solid rgba(201,168,76,.2); border-radius: 50%;
-      color: rgba(201,168,76,.45); font-family: 'Cinzel', serif;
-      font-size: .6rem; cursor: pointer; transition: all .22s;
-    }
-    #info-btn:hover { border-color: rgba(201,168,76,.5); color: #c9a84c; }
-
-    /* ── INFO MODAL ────────────────────────────────────────── */
-    #info-modal {
-      display: none;
-      position: fixed; inset: 0; z-index: 300;
-      align-items: center; justify-content: center;
-      background: rgba(0,0,0,.6);
-      padding: 20px;
-    }
-    #info-modal.open { display: flex; }
-
-    #info-box {
-      background: rgba(4,3,14,.88);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(201,168,76,.35);
-      border-top: 2px solid rgba(201,168,76,.6);
-      max-width: 360px; width: 100%;
-      padding: 24px 22px 20px;
-      color: #c9a84c;
-      font-family: 'Cinzel', Georgia, serif;
-      position: relative;
-    }
-    #info-box h3 {
-      font-family: 'Cinzel Decorative', 'Cinzel', serif;
-      font-size: .85rem; letter-spacing: .08em;
-      margin-bottom: 14px;
-      text-shadow: 0 0 20px rgba(201,168,76,.3);
-    }
-    #info-box p {
-      font-size: .68rem; line-height: 1.7;
-      color: rgba(201,168,76,.75);
-      margin-bottom: 10px;
-    }
-    #info-box p:last-of-type { margin-bottom: 18px; }
-    #info-box strong { color: #c9a84c; }
-    #info-close {
-      display: block; width: 100%;
-      background: transparent;
-      border: 1px solid rgba(201,168,76,.4); color: #c9a84c;
-      font-family: 'Cinzel', serif; font-size: .62rem; letter-spacing: .2em;
-      padding: 8px; cursor: pointer; text-transform: uppercase;
-      transition: all .22s;
-    }
-    #info-close:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
-
-    /* ── STATE CLASSES ─────────────────────────────────────── */
-    .state-arrived #status-text { animation: pulse-txt 2.2s ease-in-out infinite; }
-    @keyframes pulse-txt {
-      0%,100% { opacity: .48; }
-      50%      { opacity: 1; color: rgba(201,168,76,.9); }
-    }
-  </style>
-</head>
-<body>
-
-<!-- Opening screen: blackletter title auto-fades to landscape -->
-<div id="opening-screen">
-  <div id="opening-title">Ere Long</div>
-</div>
-
-<div id="bg-a"></div>
-<div id="bg-b"></div>
-
-<div id="app">
-  <div id="panel">
-
-    <!-- Four countdown clock faces with integrated navigation -->
-    <div id="dial-area">
-      <button class="nav-arrow" id="btn-prev" aria-label="Previous">&#9664;</button>
-      <div id="dial-row">
-        <div class="dial-wrap">
-          <canvas class="dial-canvas" id="dial-d" width="86" height="86"></canvas>
-          <span class="dial-label">Days</span>
-        </div>
-        <div class="dial-wrap">
-          <canvas class="dial-canvas" id="dial-h" width="86" height="86"></canvas>
-          <span class="dial-label">Hrs</span>
-        </div>
-        <div class="dial-wrap">
-          <canvas class="dial-canvas" id="dial-m" width="86" height="86"></canvas>
-          <span class="dial-label">Min</span>
-        </div>
-        <div class="dial-wrap">
-          <canvas class="dial-canvas" id="dial-s" width="86" height="86"></canvas>
-          <span class="dial-label">Sec</span>
-        </div>
-      </div>
-      <button class="nav-arrow" id="btn-next" aria-label="Next">&#9654;</button>
-    </div>
-
-    <div id="status-text"></div>
-
-    <div id="quote-area">
-      <div id="quote-text"></div>
-      <div id="quote-attr"></div>
-    </div>
-
-    <div class="divider"><span class="div-gem">✦</span></div>
-
-    <div id="input-panel">
-      <input type="text" id="inp-name" class="panel-input" placeholder="Name this event…" maxlength="40">
-      <div id="date-row">
-        <input type="datetime-local" id="inp-date" class="panel-input">
-        <button id="mute-btn" aria-label="Toggle sound">♪</button>
-      </div>
-      <div id="action-row">
-        <button class="mood-btn" id="btn-anticipation">Await</button>
-        <button class="mood-btn" id="btn-dread">Forebode</button>
-        <button id="save-btn">Set</button>
-      </div>
-      <div id="data-row">
-        <button class="data-btn" id="export-btn">Export Events</button>
-        <label class="data-btn" style="text-align:center; cursor:pointer;">
-          Import Events
-          <input type="file" id="import-file" accept=".json" style="display:none">
-        </label>
-        <button id="info-btn" aria-label="About export and import">?</button>
-      </div>
-    </div>
-
-<!-- Info modal -->
-<div id="info-modal">
-  <div id="info-box">
-    <h3>Your Events</h3>
-    <p>Ere Long saves your countdowns on <strong>this device only</strong>. If you clear your browser data or switch to a new device, your events will be lost.</p>
-    <p><strong>Export Events</strong> — saves all four of your countdowns to a file on your computer. Keep it somewhere safe.</p>
-    <p><strong>Import Events</strong> — restores your countdowns from a previously exported file. Use this on a new device or after clearing your data.</p>
-    <button id="info-close">Got it</button>
-  </div>
-</div>
-
-  </div>
-</div>
-
-<script>
-// ── FEATURE FLAGS ──────────────────────────────────────────
-const FEATURES = {
-  purchase: false
-  // Stripe stubbed — init when purchase === true:
-  // const stripe = Stripe('pk_live_YOUR_KEY_HERE');
-};
-
 // ── CONSTANTS ──────────────────────────────────────────────
 const ROMAN = ['I','II','III','IV'];
+const MOODS = ['neutral','anticipation','dread'];
 
 // ── AUDIO ──────────────────────────────────────────────────
 const AUDIO = {
@@ -401,6 +43,20 @@ const blankFace = () => ({
   createdAt: null, arrivedAt: null,
 });
 
+// Coerce untrusted face data (localStorage or imported file) to the
+// exact shape and types we expect; anything else falls back to blank.
+function sanitizeFace(f) {
+  const b = blankFace();
+  if (typeof f !== 'object' || f === null) return b;
+  if (typeof f.name === 'string') b.name = f.name.slice(0, 40);
+  if (typeof f.targetDate === 'string' && f.targetDate &&
+      !isNaN(new Date(f.targetDate).getTime())) b.targetDate = f.targetDate;
+  if (MOODS.includes(f.mood)) b.mood = f.mood;
+  if (Number.isFinite(f.createdAt)) b.createdAt = f.createdAt;
+  if (Number.isFinite(f.arrivedAt)) b.arrivedAt = f.arrivedAt;
+  return b;
+}
+
 const state = {
   face:  0,
   faces: [blankFace(), blankFace(), blankFace(), blankFace()],
@@ -415,7 +71,7 @@ function hydrate() {
     if (!raw) return;
     const saved = JSON.parse(raw);
     if (Array.isArray(saved) && saved.length === 4)
-      state.faces = saved.map(f => ({ ...blankFace(), ...f }));
+      state.faces = saved.map(sanitizeFace);
   } catch(_) {}
 }
 
@@ -718,7 +374,11 @@ function panelLoad(i) {
 
 function panelSave() {
   const f=state.faces[state.face];
-  const newDate=document.getElementById('inp-date').value;
+  const dateEl=document.getElementById('inp-date');
+  let newDate=dateEl.value;
+  // Refuse impossible or out-of-range dates (bad year length, Feb 30, etc.):
+  // the browser flags them invalid; revert to the last good value.
+  if (!dateEl.checkValidity()) { dateEl.value=f.targetDate; newDate=f.targetDate; }
   if (newDate!==f.targetDate) { f.createdAt=newDate?Date.now():null; f.arrivedAt=null; }
   f.name=document.getElementById('inp-name').value.trim();
   f.targetDate=newDate;
@@ -770,7 +430,7 @@ document.getElementById('import-file').addEventListener('change', e => {
     try {
       const parsed = JSON.parse(ev.target.result);
       if (Array.isArray(parsed) && parsed.length === 4) {
-        state.faces = parsed.map(f => ({ ...blankFace(), ...f }));
+        state.faces = parsed.map(sanitizeFace);
         persist();
         // Re-seed quote state
         state.faces.forEach((f,i) => {
@@ -783,6 +443,47 @@ document.getElementById('import-file').addEventListener('change', e => {
     e.target.value = ''; // reset so same file can be re-imported
   };
   reader.readAsText(file);
+});
+
+// ── FIRST-VISIT TUTORIAL ───────────────────────────────────
+const TUT_KEY = 'erelong_tut_v1';
+const TUT_STEPS = [
+  { title: 'Welcome to Ere Long',
+    text:  'A countdown for things dreaded and anticipated. Ere Long keeps four faces — four separate events. Turn between them with the ◀ and ▶ arrows, or your keyboard\'s arrow keys.' },
+  { title: 'Set an Event',
+    text:  'Name the event, choose its date and hour, then press Set. The dials will count down the days, hours, minutes, and seconds until it arrives.' },
+  { title: 'Choose a Mood',
+    text:  'Await marks something longed for; Forebode, something dreaded. The scenery, music, and words will follow your choice as the hour draws near. Choose neither, and all stays still. The ♪ button silences the music.' },
+  { title: 'Yours Alone',
+    text:  'Thy serial number only unlocks the door. Your events are saved solely on this device — no database of your countdowns exists, and no one can see what you await or dread. Use Export Events to keep a copy and Import Events to restore it. Press ? at any time to read the guide again.' },
+];
+let tutStep = 0;
+
+const tutModal = document.getElementById('tut-modal');
+
+function tutRender() {
+  const s = TUT_STEPS[tutStep];
+  document.getElementById('tut-title').textContent = s.title;
+  document.getElementById('tut-text').textContent = s.text;
+  document.getElementById('tut-next').textContent = tutStep === TUT_STEPS.length-1 ? 'Begin' : 'Next';
+  document.querySelectorAll('#tut-dots span').forEach((d,i) => d.classList.toggle('active', i === tutStep));
+}
+
+function tutClose() {
+  tutModal.classList.remove('open');
+  try { localStorage.setItem(TUT_KEY, '1'); } catch(_) {}
+}
+
+function maybeShowTutorial() {
+  try { if (localStorage.getItem(TUT_KEY)) return; } catch(_) { return; }
+  tutStep = 0; tutRender();
+  tutModal.classList.add('open');
+}
+
+document.getElementById('tut-skip').addEventListener('click', tutClose);
+document.getElementById('tut-next').addEventListener('click', () => {
+  if (tutStep >= TUT_STEPS.length-1) { tutClose(); return; }
+  tutStep++; tutRender();
 });
 
 // ── FACE NAVIGATION (with dial fade) ──────────────────────
@@ -806,6 +507,7 @@ function goToFace(next) {
 document.getElementById('btn-prev').addEventListener('click',()=>goToFace((state.face+3)%4));
 document.getElementById('btn-next').addEventListener('click',()=>goToFace((state.face+1)%4));
 document.addEventListener('keydown',e=>{
+  if (infoModal.classList.contains('open') || tutModal.classList.contains('open')) return;
   if (e.key==='ArrowLeft')  goToFace((state.face+3)%4);
   if (e.key==='ArrowRight') goToFace((state.face+1)%4);
 });
@@ -837,7 +539,7 @@ function runOpeningSequence() {
         if (step>=STEPS) clearInterval(fade);
       }, STEP_MS);
     }
-    setTimeout(()=>{ screen.style.display='none'; }, FADE_MS+100);
+    setTimeout(()=>{ screen.style.display='none'; maybeShowTutorial(); }, FADE_MS+100);
   }
 
   // Race font load against a 1.5 s safety timeout — whichever resolves first
@@ -886,6 +588,21 @@ changeBg(selectBg(state.faces[0]));
 panelLoad(0);
 tick();
 runOpeningSequence();
-</script>
-</body>
-</html>
+
+// ── SERVICE WORKER ─────────────────────────────────────────
+// Registers over https/localhost only (browsers ignore it on file://).
+// When running as an installed app, ask the worker to pre-cache all
+// backgrounds and sounds so the full experience works offline.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(() => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+      if (standalone) {
+        navigator.serviceWorker.ready.then(reg => {
+          if (reg.active) reg.active.postMessage('precache-media');
+        });
+      }
+    }).catch(()=>{});
+  });
+}

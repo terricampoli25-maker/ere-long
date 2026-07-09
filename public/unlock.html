@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ere Long — Unlock</title>
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="unlock-body">
+
+<div id="unlock-wrap">
+  <h1 id="unlock-title">Ere Long</h1>
+  <div id="unlock-box">
+    <p id="unlock-lead">Enter the serial number from thy purchase email.</p>
+    <form id="unlock-form">
+      <input type="text" id="unlock-serial" class="panel-input" placeholder="ERELONG-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="64">
+      <button type="submit" id="unlock-btn">Unlock</button>
+    </form>
+    <p id="unlock-error"></p>
+    <p id="unlock-note">Thy serial works on up to two devices.<br>
+      No serial yet? <a id="unlock-buy" href="https://terristech.com">Find Ere Long at terristech.com</a></p>
+  </div>
+</div>
+
+<script src="unlock.js"></script>
+</body>
+</html>

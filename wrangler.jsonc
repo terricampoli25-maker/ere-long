@@ -1,0 +1,22 @@
+{
+  "name": "ere-long",
+  "main": "worker.js",
+  "compatibility_date": "2026-05-07",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "vars": {
+    // URL of the deployed serial-activation license service (no trailing slash).
+    "LICENSE_API": "https://REPLACE-WITH-LICENSE-SERVICE.workers.dev",
+    // Must match the product `code` row in the license service's products table.
+    "PRODUCT_CODE": "ERELONG"
+  }
+  // Secret (set once, never in this file):
+  //   NODE_OPTIONS="--use-system-ca" npx wrangler secret put SESSION_SECRET
+  //   (any long random string — e.g. 64 hex chars)
+}
