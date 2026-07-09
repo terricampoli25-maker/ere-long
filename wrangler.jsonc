@@ -10,9 +10,13 @@
     "binding": "ASSETS",
     "run_worker_first": true
   },
+  // Direct pipe to the license Worker (same account, so plain fetch is blocked).
+  "services": [
+    { "binding": "LICENSE", "service": "serial-activation" }
+  ],
   "vars": {
     // URL of the deployed serial-activation license service (no trailing slash).
-    "LICENSE_API": "https://REPLACE-WITH-LICENSE-SERVICE.workers.dev",
+    "LICENSE_API": "https://serial-activation.terricampoli25.workers.dev",
     // Must match the product `code` row in the license service's products table.
     "PRODUCT_CODE": "ERELONG"
   }

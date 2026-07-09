@@ -53,7 +53,10 @@ async function handleUnlock(request, env) {
 
   let res, data;
   try {
-    res = await fetch(`${env.LICENSE_API}/activate`, {
+    // Service binding when deployed (same-account worker-to-worker fetch is
+    // blocked on workers.dev); plain fetch as fallback for local dev.
+    const doFetch = env.LICENSE ? env.LICENSE.fetch.bind(env.LICENSE) : fetch;
+    res = await doFetch(`${env.LICENSE_API}/activate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ serial, machineId }),
