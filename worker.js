@@ -9,7 +9,11 @@
 // Secret: SESSION_SECRET — set with `wrangler secret put SESSION_SECRET`.
 
 const COOKIE = 'erelong_s';
-const SESSION_DAYS = 365;
+// Yearly subscription model: short sessions force a monthly silent
+// re-validation (the unlock page auto-renews with the stored serial), so a
+// cancelled subscription loses access within ~30 days. Aligns with the
+// license service's 35-day subscription expiry window.
+const SESSION_DAYS = 30;
 
 // Files the unlock page itself needs — everything else requires a session.
 // ('/unlock' is the clean URL the asset server redirects /unlock.html to.)

@@ -1,7 +1,11 @@
 // Ere Long unlock page — sends serial + a random per-browser device id
 // to the gate worker, which validates it against the license service.
+// On success the serial is remembered locally so the monthly session
+// renewal happens silently: subscribers in good standing pass straight
+// through; cancelled subscriptions land back on the form.
 
 const DEVICE_KEY = 'erelong_device_v1';
+const SERIAL_KEY = 'erelong_serial_v1';
 
 let deviceId;
 try {
@@ -18,6 +22,17 @@ const form  = document.getElementById('unlock-form');
 const input = document.getElementById('unlock-serial');
 const btn   = document.getElementById('unlock-btn');
 const errEl = document.getElementById('unlock-error');
+const lead  = document.getElementById('unlock-lead');
+
+async function attemptUnlock(serial) {
+  const res = await fetch('api/unlock', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ serial, machineId: deviceId }),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok && data.ok, status: res.status, error: data.error };
+}
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
@@ -29,17 +44,40 @@ form.addEventListener('submit', async e => {
   errEl.textContent = '';
 
   try {
-    const res = await fetch('api/unlock', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ serial, machineId: deviceId }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.ok) { location.replace('./'); return; }
-    errEl.textContent = data.error || 'That serial could not be verified.';
+    const r = await attemptUnlock(serial);
+    if (r.ok) {
+      try { localStorage.setItem(SERIAL_KEY, serial); } catch (_) {}
+      location.replace('./');
+      return;
+    }
+    errEl.textContent = r.error || 'That serial could not be verified.';
   } catch (_) {
     errEl.textContent = 'The gatekeeper could not be reached. Check thy connection.';
   }
   btn.disabled = false;
   btn.textContent = 'Unlock';
 });
+
+// Silent renewal — if a serial is remembered from a previous unlock on this
+// device, try it immediately. Runs once per page load; no loops.
+(async () => {
+  let saved = null;
+  try { saved = localStorage.getItem(SERIAL_KEY); } catch (_) {}
+  if (!saved) return;
+
+  lead.textContent = 'Renewing thy passage…';
+  btn.disabled = true;
+  try {
+    const r = await attemptUnlock(saved);
+    if (r.ok) { location.replace('./'); return; }
+    // Serial revoked or unknown — forget it so the form starts clean.
+    if (r.status === 403 || r.status === 404) {
+      try { localStorage.removeItem(SERIAL_KEY); } catch (_) {}
+    }
+    errEl.textContent = r.error || 'Thy serial could no longer be verified.';
+  } catch (_) {
+    errEl.textContent = 'The gatekeeper could not be reached. Check thy connection.';
+  }
+  lead.textContent = 'Enter the serial number from thy purchase email.';
+  btn.disabled = false;
+})();

@@ -35,19 +35,33 @@ together plus Stripe. Steps marked 🔑 need your accounts.
    Every direct file URL (e.g. `/app.js`, `/sounds/storm.mp3`) should
    return 403 until unlocked.
 
-## C. Stripe
+## C. Stripe — YEARLY SUBSCRIPTION (decided 2026-07-09)
 
-1. 🔑 On the $6 Ere Long Payment Link
-   (`https://buy.stripe.com/fZu5kE2tS81XaMA8AC4Ni01`):
-   add metadata `product_code = ERELONG`.
-   ⚠️ REGISTRY RULE: open the link yourself and read "Ere Long" on the
-   checkout page before wiring anything.
+⚠️ The old `fZu5kE…` link is a $6 ONE-TIME payment — wrong type now.
+Do NOT reuse it; create a fresh link and retire the old one from the
+registry.
+
+1. 🔑 In Stripe: create a recurring price for Ere Long — **$6.00 / year**
+   — and a new Payment Link from it. Add metadata
+   `product_code = ERELONG` to the link (this is what the webhook uses
+   to issue the right serial).
+   ⚠️ REGISTRY RULE: open the new link yourself and read "Ere Long" and
+   "per year" on the checkout page before wiring anything. Then add it
+   to the payment-link registry.
 2. 🔑 Confirm the Stripe webhook endpoint points at the license service
-   (`https://<license-service>/webhook/stripe`) and sends
-   `checkout.session.completed` (and `customer.subscription.deleted`).
+   (`https://serial-activation.terricampoli25.workers.dev/webhook/stripe`)
+   and sends `checkout.session.completed` and
+   `customer.subscription.deleted` (cancellation revokes the serial
+   automatically — that's the whole point of yearly).
 3. Set the Payment Link's after-payment message to something like:
    "Your serial number is on its way to your email. Open
    <app URL> and enter it to unlock Ere Long."
+
+How enforcement works: sessions last 30 days; the unlock page silently
+re-validates the remembered serial, and the license service refuses
+serials whose subscription was cancelled. So a canceller keeps access
+for at most ~30 days past cancellation, automatically — no manual
+deactivation ever.
 
 ## D. End-to-end rehearsal (before re-enabling the card button)
 
