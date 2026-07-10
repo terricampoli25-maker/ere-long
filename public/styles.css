@@ -261,8 +261,8 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   flex: 1; background: transparent;
   border: 1px solid rgba(201,168,76,.25);
   color: rgba(201,168,76,.45); font-family: 'Cinzel', serif;
-  font-size: .6rem; letter-spacing: .1em;
-  padding: 7px 2px; cursor: pointer;
+  font-size: .52rem; letter-spacing: .08em;
+  padding: 6px 2px; cursor: pointer;
   text-transform: uppercase; transition: all .22s; position: relative;
 }
 .mood-btn::before, .mood-btn::after {
@@ -276,15 +276,17 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .mood-btn.on-dread { background: rgba(120,18,18,.2); border-color: rgba(176,34,34,.6); color: #cc4444; }
 .mood-btn.on-dread::before, .mood-btn.on-dread::after { border-color: rgba(176,34,34,.7); }
 
-#save-btn {
+#save-btn, #clear-btn {
   flex: 0 0 auto;
   background: transparent;
   border: 1px solid rgba(201,168,76,.45); color: #c9a84c;
-  font-family: 'Cinzel', serif; font-size: .6rem; letter-spacing: .18em;
-  padding: 7px 14px; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: .52rem; letter-spacing: .12em;
+  padding: 6px 9px; cursor: pointer;
   text-transform: uppercase; transition: all .25s;
 }
-#save-btn:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
+#save-btn:hover, #clear-btn:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
+#clear-btn { border-color: rgba(201,168,76,.2); color: rgba(201,168,76,.5); }
+#clear-btn:hover { background: rgba(120,18,18,.15); border-color: rgba(176,34,34,.5); color: #cc4444; }
 
 /* ── EXPORT / IMPORT ───────────────────────────────────── */
 #data-row {

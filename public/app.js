@@ -403,6 +403,15 @@ document.getElementById('btn-dread').addEventListener('click',()=>{
 });
 
 document.getElementById('save-btn').addEventListener('click', panelSave);
+
+document.getElementById('clear-btn').addEventListener('click', ()=>{
+  const i=state.face;
+  state.faces[i]=blankFace();
+  qState.phase[i]='none'; qState.mood[i]='neutral'; qState.current[i]=null;
+  persist();
+  panelLoad(i);
+  updateAudio();
+});
 document.getElementById('inp-name').addEventListener('blur', panelSave);
 document.getElementById('inp-date').addEventListener('change', panelSave);
 
