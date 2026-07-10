@@ -13,6 +13,16 @@ Object.values(AUDIO).forEach(a => { a.loop = true; });
 let muted       = false;
 let activeTrack = null;
 let openingDone = false;
+let previewing  = null;   // track name while the Listen buttons play
+
+// ── SOUND SETTINGS ─────────────────────────────────────────
+const SETTINGS_KEY = 'erelong_settings_v1';
+const settings = { arrival: '5' };   // '1' | '5' | 'forever' minutes of arrival music
+try {
+  const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  if (['1','5','forever'].includes(s.arrival)) settings.arrival = s.arrival;
+} catch(_) {}
+function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch(_) {} }
 
 // ── BACKGROUNDS ────────────────────────────────────────────
 const BG = {
@@ -105,16 +115,32 @@ function selectBg(face) {
 }
 
 // ── AUDIO HELPERS ──────────────────────────────────────────
+// Cap arrival audio per the user's setting: full volume until the chosen
+// duration passes, a 10-second fade at the end, then silence.
+function arrivalCap(face, vol) {
+  if (settings.arrival === 'forever') return vol;
+  const elapsed = Date.now() - new Date(face.targetDate).getTime();
+  if (elapsed <= 0) return vol;
+  const capMs = (settings.arrival === '1' ? 1 : 5) * 60000;
+  if (elapsed >= capMs) return 0;
+  return vol * Math.min(1, (capMs - elapsed) / 10000);
+}
+
 function selectTrack(face) {
   const vs = visualState(face), pct = getElapsedPct(face);
   if (face.mood==='neutral') return { track:null, vol:0 };
-  if (face.mood==='anticipation') { const vol=vs==='waiting'?Math.max(.02,pct/100):1; return { track:'chorus',vol }; }
-  if (face.mood==='dread') { if (vs==='post') return { track:'post',vol:.5 }; const vol=vs==='waiting'?Math.max(.02,pct/100):1; return { track:'storm',vol }; }
-  return { track:null, vol:0 };
+  let track = null, vol = 0;
+  if (face.mood==='anticipation') { track='chorus'; vol = vs==='waiting' ? Math.max(.02,pct/100) : arrivalCap(face,1); }
+  if (face.mood==='dread') {
+    if (vs==='post') { track='post'; vol = arrivalCap(face,.5); }
+    else { track='storm'; vol = vs==='waiting' ? Math.max(.02,pct/100) : arrivalCap(face,1); }
+  }
+  if (!track || vol <= 0.001) return { track:null, vol:0 };
+  return { track, vol };
 }
 
 function updateAudio() {
-  if (muted || !openingDone) return;
+  if (previewing || muted || !openingDone) return;
   const { track, vol } = selectTrack(state.faces[state.face]);
   if (track !== activeTrack) {
     if (activeTrack) AUDIO[activeTrack].pause();
@@ -137,7 +163,55 @@ function setMute(m) {
   }
 }
 
-document.getElementById('mute-btn').addEventListener('click', () => setMute(!muted));
+// ── SOUND SETTINGS MODAL (opened by ♪) ─────────────────────
+const soundModal = document.getElementById('sound-modal');
+
+function syncSoundModal() {
+  const mt = document.getElementById('mute-toggle');
+  mt.textContent = muted ? 'Sound Returns' : 'Silence All';
+  mt.classList.toggle('on', muted);
+  document.querySelectorAll('.snd-opt').forEach(b => b.classList.toggle('on', b.dataset.dur === settings.arrival));
+  document.querySelectorAll('.snd-listen').forEach(b => b.classList.toggle('on', b.dataset.track === previewing));
+}
+
+function stopPreview() {
+  if (!previewing) return;
+  AUDIO[previewing].pause();
+  previewing = null;
+  activeTrack = null;   // force re-evaluation of the proper track
+  updateAudio();
+  syncSoundModal();
+}
+
+function closeSoundModal() { stopPreview(); soundModal.classList.remove('open'); }
+
+document.getElementById('mute-btn').addEventListener('click', () => { syncSoundModal(); soundModal.classList.add('open'); });
+document.getElementById('sound-close').addEventListener('click', closeSoundModal);
+soundModal.addEventListener('click', e => { if (e.target === soundModal) closeSoundModal(); });
+
+document.getElementById('mute-toggle').addEventListener('click', () => {
+  stopPreview();
+  setMute(!muted);
+  syncSoundModal();
+});
+
+document.querySelectorAll('.snd-opt').forEach(b => b.addEventListener('click', () => {
+  settings.arrival = b.dataset.dur;
+  saveSettings();
+  if (!previewing) updateAudio();
+  syncSoundModal();
+}));
+
+document.querySelectorAll('.snd-listen').forEach(b => b.addEventListener('click', () => {
+  const name = b.dataset.track;
+  if (previewing === name) { stopPreview(); return; }
+  if (previewing) { AUDIO[previewing].pause(); previewing = null; }
+  if (activeTrack) AUDIO[activeTrack].pause();
+  previewing = name;
+  AUDIO[name].volume = .8;
+  AUDIO[name].play().catch(()=>{});
+  syncSoundModal();
+}));
 
 // ── FOUR COUNTDOWN DIALS ───────────────────────────────────
 const dialPrev = { d:null, h:null, m:null, s:null };
@@ -462,7 +536,7 @@ const TUT_STEPS = [
   { title: 'Set an Event',
     text:  'Name the event, choose its date and hour, then press Set. The dials will count down the days, hours, minutes, and seconds until it arrives.' },
   { title: 'Choose a Mood',
-    text:  'Await marks something longed for; Forebode, something dreaded. The scenery, music, and words will follow your choice as the hour draws near. Choose neither, and all stays still. The ♪ button silences the music.' },
+    text:  'Await marks something longed for; Forebode, something dreaded. The scenery, music, and words will follow your choice as the hour draws near. Choose neither, and all stays still. The ♪ button opens the music settings.' },
   { title: 'Yours Alone',
     text:  'Thy serial number only unlocks the door. Your events are saved solely on this device — no database of your countdowns exists, and no one can see what you await or dread. Use Export Events to keep a copy and Import Events to restore it. Press ? at any time to read the guide again.' },
 ];
@@ -516,7 +590,7 @@ function goToFace(next) {
 document.getElementById('btn-prev').addEventListener('click',()=>goToFace((state.face+3)%4));
 document.getElementById('btn-next').addEventListener('click',()=>goToFace((state.face+1)%4));
 document.addEventListener('keydown',e=>{
-  if (infoModal.classList.contains('open') || tutModal.classList.contains('open')) return;
+  if (infoModal.classList.contains('open') || tutModal.classList.contains('open') || soundModal.classList.contains('open')) return;
   if (e.key==='ArrowLeft')  goToFace((state.face+3)%4);
   if (e.key==='ArrowRight') goToFace((state.face+1)%4);
 });

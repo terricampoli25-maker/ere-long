@@ -315,16 +315,16 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 #info-btn:hover { border-color: rgba(201,168,76,.5); color: #c9a84c; }
 
 /* ── INFO + TUTORIAL MODALS ────────────────────────────── */
-#info-modal, #tut-modal {
+#info-modal, #tut-modal, #sound-modal {
   display: none;
   position: fixed; inset: 0; z-index: 300;
   align-items: center; justify-content: center;
   background: rgba(0,0,0,.6);
   padding: 20px;
 }
-#info-modal.open, #tut-modal.open { display: flex; }
+#info-modal.open, #tut-modal.open, #sound-modal.open { display: flex; }
 
-#info-box, #tut-box {
+#info-box, #tut-box, #sound-box {
   background: rgba(4,3,14,.88);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(201,168,76,.35);
@@ -336,21 +336,21 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   font-family: 'Cinzel', Georgia, serif;
   position: relative;
 }
-#info-box h3, #tut-box h3 {
+#info-box h3, #tut-box h3, #sound-box h3 {
   font-family: 'Cinzel Decorative', 'Cinzel', serif;
   font-size: .85rem; letter-spacing: .08em;
   margin-bottom: 14px;
   text-shadow: 0 0 20px rgba(201,168,76,.3);
 }
 #info-box h3:not(:first-child) { margin-top: 18px; }
-#info-box p, #tut-box p {
+#info-box p, #tut-box p, #sound-box p {
   font-size: .68rem; line-height: 1.7;
   color: rgba(201,168,76,.75);
   margin-bottom: 10px;
 }
 #info-box p:last-of-type { margin-bottom: 18px; }
 #info-box strong { color: #c9a84c; }
-#info-close, #tut-nav button {
+#info-close, #tut-nav button, #sound-close {
   display: block; width: 100%;
   background: transparent;
   border: 1px solid rgba(201,168,76,.4); color: #c9a84c;
@@ -358,7 +358,25 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   padding: 8px; cursor: pointer; text-transform: uppercase;
   transition: all .22s;
 }
-#info-close:hover, #tut-nav button:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
+#info-close:hover, #tut-nav button:hover, #sound-close:hover { background: rgba(201,168,76,.1); border-color: #c9a84c; }
+
+/* ── SOUND SETTINGS ────────────────────────────────────── */
+.snd-label {
+  font-size: .6rem; letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(201,168,76,.55); margin: 14px 0 6px;
+}
+.snd-row { display: flex; gap: 6px; }
+.snd-btn {
+  flex: 1; background: transparent;
+  border: 1px solid rgba(201,168,76,.25); color: rgba(201,168,76,.5);
+  font-family: 'Cinzel', serif; font-size: .54rem; letter-spacing: .08em;
+  padding: 7px 4px; cursor: pointer; text-transform: uppercase;
+  transition: all .22s;
+}
+.snd-btn:hover { border-color: rgba(201,168,76,.55); color: #c9a84c; }
+.snd-btn.on { background: rgba(201,168,76,.12); border-color: rgba(201,168,76,.7); color: #d4b455; }
+#mute-toggle { width: 100%; }
+#sound-close { margin-top: 18px; }
 
 /* ── TUTORIAL SPECIFICS ────────────────────────────────── */
 #tut-text { min-height: 6.8em; }

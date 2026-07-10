@@ -85,12 +85,32 @@
   <div id="info-box">
     <h3>How to Use</h3>
     <p>Ere Long keeps <strong>four faces</strong> — four separate events. Turn between them with the ◀ ▶ arrows or your keyboard's arrow keys. Name an event, choose its date and hour, and press <strong>Set</strong>.</p>
-    <p><strong>Await</strong> marks something longed for; <strong>Forebode</strong>, something dreaded. The scenery, music, and words follow the mood as the hour draws near. Choose neither, and all stays still. The ♪ button silences the music.</p>
+    <p><strong>Await</strong> marks something longed for; <strong>Forebode</strong>, something dreaded. The scenery, music, and words follow the mood as the hour draws near. Choose neither, and all stays still. The ♪ button opens the music settings — silence everything, choose how long arrival music plays, or listen to the two themes.</p>
     <h3>Your Events</h3>
     <p><strong>Private by design</strong> — your serial number only unlocks the door. Your events are saved solely in this browser, on this device: no account, no database of your countdowns, and no one — not even us — can see what you're counting down to. But if you clear your browser data or switch devices, your events will be lost. So:</p>
     <p><strong>Export Events</strong> — saves all four of your countdowns to a file on your computer. Keep it somewhere safe.</p>
     <p><strong>Import Events</strong> — restores your countdowns from a previously exported file. Use this on a new device or after clearing your data.</p>
     <button id="info-close">Got it</button>
+  </div>
+</div>
+
+<!-- Sound settings modal (opened by the ♪ button) -->
+<div id="sound-modal">
+  <div id="sound-box">
+    <h3>Music &amp; Sound</h3>
+    <button id="mute-toggle" class="snd-btn">Silence All</button>
+    <p class="snd-label">When the hour arrives, play for:</p>
+    <div class="snd-row">
+      <button class="snd-btn snd-opt" data-dur="1">One Minute</button>
+      <button class="snd-btn snd-opt" data-dur="5">Five Minutes</button>
+      <button class="snd-btn snd-opt" data-dur="forever">Until Silenced</button>
+    </div>
+    <p class="snd-label">Listen:</p>
+    <div class="snd-row">
+      <button class="snd-btn snd-listen" data-track="chorus">Chorus — Hope</button>
+      <button class="snd-btn snd-listen" data-track="storm">Storm — Dread</button>
+    </div>
+    <button id="sound-close">Done</button>
   </div>
 </div>
 
