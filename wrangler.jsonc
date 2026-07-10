@@ -5,6 +5,12 @@
   "observability": {
     "enabled": true
   },
+  // Canonical address. workers.dev is disabled so buyer data (unlock cookie,
+  // countdowns) lives on exactly one origin.
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "ere-long.terristech.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",

@@ -55,7 +55,7 @@ registry.
    automatically — that's the whole point of yearly).
 3. Set the Payment Link's after-payment message to something like:
    "Your serial number is on its way to your email. Open
-   <app URL> and enter it to unlock Ere Long."
+   https://ere-long.terristech.com and enter it to unlock Ere Long."
 
 How enforcement works: sessions last 30 days; the unlock page silently
 re-validates the remembered serial, and the license service refuses
