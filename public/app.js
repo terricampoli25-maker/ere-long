@@ -2,6 +2,11 @@
 const ROMAN = ['I','II','III','IV'];
 const MOODS = ['neutral','anticipation','dread'];
 
+// Per-event colour — the "colour-coded star". These 8 hexes match Thine's
+// COUNTDOWN_PALETTE exactly, so a countdown keeps the same colour in both
+// apps. '' (empty) means the classic gold — the original look stays default.
+const COUNTDOWN_PALETTE = ['#7B3F7D','#3F6E7B','#7B5A3F','#3F7B5A','#7B3F4F','#4F3F7B','#7B6E3F','#3F7B6E'];
+
 // ── AUDIO ──────────────────────────────────────────────────
 const AUDIO = {
   chorus: new Audio('sounds/chorus.mp3'),
@@ -49,7 +54,7 @@ function changeBg(url) {
 
 // ── STATE ──────────────────────────────────────────────────
 const blankFace = () => ({
-  name: '', targetDate: '', mood: 'neutral',
+  name: '', targetDate: '', mood: 'neutral', color: '',
   createdAt: null, arrivedAt: null,
 });
 
@@ -62,9 +67,39 @@ function sanitizeFace(f) {
   if (typeof f.targetDate === 'string' && f.targetDate &&
       !isNaN(new Date(f.targetDate).getTime())) b.targetDate = f.targetDate;
   if (MOODS.includes(f.mood)) b.mood = f.mood;
+  if (typeof f.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(f.color)) b.color = f.color;
   if (Number.isFinite(f.createdAt)) b.createdAt = f.createdAt;
   if (Number.isFinite(f.arrivedAt)) b.arrivedAt = f.arrivedAt;
   return b;
+}
+
+// ── COLOUR HELPERS ─────────────────────────────────────────
+// Derive the dial palette from the current face's colour. Returns null when
+// no colour is set, which tells drawDial to use the classic hard-coded gold.
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+}
+function lighten({r,g,b}, amt) {
+  return { r:Math.round(r+(255-r)*amt), g:Math.round(g+(255-g)*amt), b:Math.round(b+(255-b)*amt) };
+}
+function rgbToHex({r,g,b}) {
+  return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+function dialPalette() {
+  const hex = state.faces[state.face].color;
+  if (!hex) return null;                       // classic gold
+  const rgb = hexToRgb(hex);
+  const { r, g, b } = rgb;
+  return {
+    ring:    hex,
+    bright:  rgbToHex(lighten(rgb, .28)),
+    glow:    `rgba(${r},${g},${b},.16)`,
+    inner:   `rgba(${r},${g},${b},.28)`,
+    tickMaj: `rgba(${r},${g},${b},.6)`,
+    tickMin: `rgba(${r},${g},${b},.28)`,
+    shadow:  `rgba(${r},${g},${b},.42)`,
+  };
 }
 
 const state = {
@@ -226,9 +261,11 @@ function drawDial(key, val, glowBright) {
 
   ctx.clearRect(0,0,W,H);
 
+  const P = dialPalette();   // null → classic gold
+
   // Outer glow
   const grd = ctx.createRadialGradient(cx,cy,r-4,cx,cy,r+5);
-  grd.addColorStop(0,'rgba(201,168,76,.12)'); grd.addColorStop(1,'transparent');
+  grd.addColorStop(0, P ? P.glow : 'rgba(201,168,76,.12)'); grd.addColorStop(1,'transparent');
   ctx.beginPath(); ctx.arc(cx,cy,r+5,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
 
   // Face background
@@ -236,14 +273,14 @@ function drawDial(key, val, glowBright) {
   bg.addColorStop(0,'rgba(26,22,48,.94)'); bg.addColorStop(1,'rgba(8,6,26,.97)');
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=bg; ctx.fill();
 
-  // Gold outer ring — brighter when active
+  // Outer ring — the event's colour (or classic gold), brighter when active
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-  ctx.strokeStyle = glowBright ? '#d4b455' : '#c9a84c';
+  ctx.strokeStyle = glowBright ? (P ? P.bright : '#d4b455') : (P ? P.ring : '#c9a84c');
   ctx.lineWidth = glowBright ? 3 : 2.5; ctx.stroke();
 
   // Inner ring
   ctx.beginPath(); ctx.arc(cx,cy,r-6,0,Math.PI*2);
-  ctx.strokeStyle='rgba(201,168,76,.22)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle = P ? P.inner : 'rgba(201,168,76,.22)'; ctx.lineWidth=1; ctx.stroke();
 
   // Tick marks
   for (let i=0; i<12; i++) {
@@ -252,7 +289,8 @@ function drawDial(key, val, glowBright) {
     ctx.beginPath();
     ctx.moveTo(cx+Math.cos(a)*t0, cy+Math.sin(a)*t0);
     ctx.lineTo(cx+Math.cos(a)*t1, cy+Math.sin(a)*t1);
-    ctx.strokeStyle=major?'rgba(201,168,76,.55)':'rgba(201,168,76,.22)';
+    ctx.strokeStyle = major ? (P ? P.tickMaj : 'rgba(201,168,76,.55)')
+                            : (P ? P.tickMin : 'rgba(201,168,76,.22)');
     ctx.lineWidth=major?1.5:1; ctx.stroke();
   }
 
@@ -262,7 +300,7 @@ function drawDial(key, val, glowBright) {
   ctx.fillStyle='#f0ead8';
   ctx.font=`900 ${fontSize}px Cinzel,serif`;
   ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.shadowColor='rgba(201,168,76,.38)'; ctx.shadowBlur=glowBright?14:10;
+  ctx.shadowColor = P ? P.shadow : 'rgba(201,168,76,.38)'; ctx.shadowBlur=glowBright?14:10;
   ctx.fillText(val,cx,cy); ctx.restore();
 }
 
@@ -440,6 +478,7 @@ function panelLoad(i) {
   if (f.mood==='anticipation') bA.classList.add('on-anticipation');
   else if (f.mood==='dread')   bD.classList.add('on-dread');
 
+  syncColorRow();
   redrawAllDials();
   renderQuote(qState.current[i]);
   refreshDisplay();
@@ -457,6 +496,46 @@ function panelSave() {
   f.name=document.getElementById('inp-name').value.trim();
   f.targetDate=newDate;
   persist(); refreshDisplay(); changeBg(selectBg(f)); updateAudio();
+}
+
+// ── COLOUR (STAR) PICKER ───────────────────────────────────
+// A row of star swatches: the first is gold (the default look, stored as ''),
+// then Thine's 8 colours. Picking one tags the current face and repaints the
+// dials + the divider star in that colour.
+function buildColorRow() {
+  const row = document.getElementById('color-row');
+  // Leftmost = "no star": no colour at all — the event is shown by its name.
+  // Then Thine's 8 colours. (Star colours are set via CSSOM, CSP-safe.)
+  const slots = [{ hex:'', glyph:'☆', label:'No star — show the name' }]
+    .concat(COUNTDOWN_PALETTE.map(hex => ({ hex, glyph:'★', label:'Colour ' + hex })));
+  slots.forEach(({ hex, glyph, label }) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'color-swatch' + (hex ? '' : ' no-star');
+    b.dataset.color = hex;
+    b.textContent = glyph;
+    if (hex) b.style.color = hex;   // colour stars; the no-star ☆ is styled in CSS
+    b.setAttribute('aria-label', label);
+    b.addEventListener('click', () => selectColor(hex));
+    row.appendChild(b);
+  });
+}
+
+function syncColorRow() {
+  const cur = state.faces[state.face].color || '';
+  document.querySelectorAll('#color-row .color-swatch').forEach(b => {
+    b.classList.toggle('on', (b.dataset.color || '') === cur);
+  });
+  const gem = document.querySelector('.div-gem');
+  if (gem) gem.style.color = cur || '';   // '' → falls back to the stylesheet gold
+}
+
+function selectColor(hex) {
+  state.faces[state.face].color = hex;
+  persist();
+  syncColorRow();
+  redrawAllDials();
+  refreshDisplay();
 }
 
 // ── MOOD BUTTONS ───────────────────────────────────────────
@@ -667,6 +746,7 @@ state.faces.forEach((f,i)=>{
   qState.phase[i]=phase; qState.mood[i]=f.mood; qState.current[i]=pickQuote(phase,f.mood);
 });
 
+buildColorRow();
 changeBg(selectBg(state.faces[0]));
 panelLoad(0);
 tick();

@@ -237,6 +237,27 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   filter: sepia(1) saturate(2) hue-rotate(5deg) brightness(.85); cursor: pointer;
 }
 
+/* ── COLOUR (STAR) PICKER ──────────────────────────────── */
+#color-row {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  align-items: center; justify-content: center;
+  padding: 1px 0 2px;
+}
+.color-swatch {
+  width: 24px; height: 24px; padding: 0; line-height: 1;
+  background: transparent; border: 1px solid transparent; border-radius: 3px;
+  font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, border-color .2s, background .2s;
+  text-shadow: 0 1px 4px rgba(0,0,0,.9);
+}
+.color-swatch:hover { transform: scale(1.18); }
+.color-swatch.no-star { color: rgba(201,168,76,.5); }   /* the hollow ☆ = no colour */
+.color-swatch.on {
+  border-color: rgba(201,168,76,.85);
+  background: rgba(201,168,76,.1);
+}
+
 /* ── DATE + MUTE ROW ───────────────────────────────────── */
 #date-row { display: flex; gap: 8px; align-items: center; }
 #date-row .panel-input { flex: 1; }
